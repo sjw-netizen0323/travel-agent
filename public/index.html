@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>여행 플래너 · 국내 드라이브 여행</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo" aria-hidden="true">🚗</span>
+      <div>
+        <strong>여행 플래너</strong>
+        <small>AI Agent가 짜주는 국내 드라이브 여행</small>
+      </div>
+    </div>
+    <span class="pill pill-sample">OpenAI 연결</span>
+  </header>
+
+  <main class="container">
+    <!-- ───────────── HERO ───────────── -->
+    <section class="hero">
+      <p class="eyebrow">어디로 떠나볼까요?</p>
+      <h1>몇 가지만 알려주시면<br />딱 맞는 여행 일정을 짜 드릴게요</h1>
+      <p class="hero-sub">지역, 날짜, 예산과 취향을 고르면 Agent가 장소 검색 → 동선 계산 → 예산 배분까지 한 번에 진행해요.</p>
+    </section>
+
+    <!-- ───────────── FORM ───────────── -->
+    <form id="planForm" class="card form-card" autocomplete="off">
+      <div class="form-grid">
+        <!-- 1. 지역 -->
+        <fieldset class="field field-wide">
+          <legend><span class="step">1</span>여행 지역</legend>
+          <div class="input-icon">
+            <span aria-hidden="true">📍</span>
+            <input id="region" name="region" list="regionList" placeholder="예: 강릉, 제주, 경주" value="강릉" required />
+            <datalist id="regionList">
+              <option value="강릉"></option><option value="속초"></option><option value="제주"></option>
+              <option value="경주"></option><option value="부산"></option><option value="여수"></option>
+              <option value="전주"></option><option value="가평"></option><option value="통영"></option>
+            </datalist>
+          </div>
+          <div class="chips chips-quick" id="regionQuick">
+            <button type="button" class="chip-sm" data-region="강릉">🌊 강릉</button>
+            <button type="button" class="chip-sm" data-region="제주">🍊 제주</button>
+            <button type="button" class="chip-sm" data-region="경주">🏯 경주</button>
+          </div>
+        </fieldset>
+
+        <!-- 2. 날짜/기간 -->
+        <fieldset class="field">
+          <legend><span class="step">2</span>출발일과 여행 기간</legend>
+          <div class="row-2">
+            <label class="sub-label">출발일
+              <input type="date" id="startDate" name="startDate" required />
+            </label>
+            <label class="sub-label">기간
+              <select id="duration" name="duration">
+                <option value="1">당일치기</option>
+                <option value="2">1박 2일</option>
+                <option value="3" selected>2박 3일</option>
+                <option value="4">3박 4일</option>
+                <option value="5">4박 5일</option>
+              </select>
+            </label>
+          </div>
+          <p class="hint" id="dateHint"></p>
+        </fieldset>
+
+        <!-- 3. 인원/예산 -->
+        <fieldset class="field">
+          <legend><span class="step">3</span>여행 인원과 총예산</legend>
+          <div class="row-2">
+            <div class="sub-label">인원
+              <div class="stepper">
+                <button type="button" data-step="-1" aria-label="인원 줄이기">−</button>
+                <output id="peopleOut">2명</output>
+                <button type="button" data-step="1" aria-label="인원 늘리기">+</button>
+              </div>
+              <input type="hidden" id="people" name="people" value="2" />
+            </div>
+            <label class="sub-label">총예산 (원)
+              <input type="text" inputmode="numeric" id="budget" name="budget" value="800,000" />
+            </label>
+          </div>
+          <div class="chips chips-quick" id="budgetQuick">
+            <button type="button" class="chip-sm" data-budget="500000">50만</button>
+            <button type="button" class="chip-sm" data-budget="800000">80만</button>
+            <button type="button" class="chip-sm" data-budget="1200000">120만</button>
+            <button type="button" class="chip-sm" data-budget="2000000">200만</button>
+          </div>
+        </fieldset>
+
+        <!-- 4. 취향 -->
+        <fieldset class="field field-wide">
+          <legend><span class="step">4</span>여행 취향 <small>여러 개 골라도 좋아요</small></legend>
+          <div class="chips" id="prefChips">
+            <label class="chip"><input type="checkbox" name="pref" value="맛집" checked /><span>🍜 맛집</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="관광" /><span>📸 관광</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="자연" checked /><span>🌿 자연</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="휴식" /><span>🛌 휴식</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="쇼핑" /><span>🛍️ 쇼핑</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="카페" checked /><span>☕ 카페</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="역사" /><span>🏛️ 역사·문화</span></label>
+            <label class="chip"><input type="checkbox" name="pref" value="액티비티" /><span>🏄 액티비티</span></label>
+          </div>
+        </fieldset>
+
+        <!-- 5. 이동수단 -->
+        <fieldset class="field field-wide">
+          <legend><span class="step">5</span>이동수단 <small>자동차 중심으로 동선을 짜요</small></legend>
+          <div class="transport">
+            <label class="t-card"><input type="radio" name="transport" value="own" checked />
+              <span><b>🚙 내 차로</b><small>출발지에서 직접 운전</small></span></label>
+            <label class="t-card"><input type="radio" name="transport" value="rental" />
+              <span><b>🔑 렌터카</b><small>현지 도착 후 대여</small></span></label>
+            <label class="t-card"><input type="radio" name="transport" value="ktx-rental" />
+              <span><b>🚄 KTX + 렌터카</b><small>장거리는 기차, 현지는 차</small></span></label>
+          </div>
+          <div class="row-inline">
+            <label class="sub-label inline">출발지
+              <input id="origin" name="origin" value="서울" />
+            </label>
+            <label class="check"><input type="checkbox" id="optParking" checked /> 주차 편한 곳 우선</label>
+            <label class="check"><input type="checkbox" id="optToll" checked /> 통행료 포함 계산</label>
+          </div>
+        </fieldset>
+
+        <!-- 6. 추가 요청 -->
+        <fieldset class="field field-wide">
+          <legend><span class="step">6</span>추가 요청 <small>자유롭게 적어주세요</small></legend>
+          <textarea id="notes" name="notes" rows="3" placeholder="예: 부모님과 함께라 많이 걷지 않았으면 좋겠어요. 바다 보이는 숙소면 좋겠어요!">바다가 보이는 카페는 꼭 가고 싶어요. 너무 빡빡하지 않게 짜주세요 :)</textarea>
+        </fieldset>
+      </div>
+
+      <div class="form-actions">
+        <button type="reset" class="btn btn-ghost">초기화</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <span class="btn-label">✨ 여행 일정 만들기</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- ───────────── RESULT ───────────── -->
+    <section id="result" class="result" aria-live="polite">
+      <div class="alert alert-error" id="errorBox" role="alert" hidden>
+        <span class="alert-icon" aria-hidden="true">⚠️</span>
+        <div class="alert-body">
+          <strong>일정을 만들지 못했어요</strong>
+          <p id="errorMsg"></p>
+        </div>
+        <div class="alert-actions">
+          <button type="button" class="btn-sm btn-sm-primary" id="errorRetry">다시 시도</button>
+          <button type="button" class="btn-sm" id="errorClose" aria-label="닫기">닫기</button>
+        </div>
+      </div>
+      <div class="alert alert-loading" id="loadingBanner" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="alert-body">
+          <strong>AI Agent가 여행 일정을 만들고 있어요</strong>
+          <p>Agent가 필요한 Tool(장소 검색 · 경로 · 예산 · 웹 검색)을 골라 실행하느라 30초~2분 정도 걸려요. 어떤 Tool을 호출했는지 아래 Agent Trace에서 실시간으로 볼 수 있어요.</p>
+        </div>
+      </div>
+      <div class="summary card" id="summary"></div>
+
+      <div class="result-grid">
+        <!-- 날짜별 일정 -->
+        <section class="card panel panel-itinerary">
+          <header class="panel-head">
+            <h2>🗓️ 날짜별 일정</h2>
+            <div class="day-tabs" id="dayTabs" role="tablist"></div>
+          </header>
+          <div class="route-bar">
+            <button type="button" class="btn-route" id="routeBtn">🚗 NAVER 자동차 경로 계산</button>
+            <span class="muted small" id="routeInfo">장소 사이 실제 자동차 이동 거리·시간을 확인해요</span>
+          </div>
+          <div id="itinerary" class="itinerary"></div>
+        </section>
+
+        <!-- 지도 -->
+        <section class="card panel panel-map">
+          <header class="panel-head">
+            <h2>🗺️ 지도</h2>
+            <div class="map-mode" id="mapMode" role="tablist" hidden>
+              <button type="button" class="tab active" data-mode="plan">일정</button>
+              <button type="button" class="tab" data-mode="places">검색 결과</button>
+            </div>
+            <span class="pill pill-muted" id="mapBadge">지도 API 연결 전 · 미리보기</span>
+          </header>
+          <div class="map" id="map">
+            <svg id="mapSvg" viewBox="0 0 600 460" preserveAspectRatio="xMidYMid meet" aria-label="여행 동선 지도"></svg>
+            <div class="naver-map" id="naverMap" hidden aria-label="NAVER 지도"></div>
+            <div class="map-tooltip" id="mapTooltip" hidden></div>
+          </div>
+          <div class="map-legend" id="mapLegend"></div>
+          <p class="map-note muted small" id="mapNote" hidden></p>
+        </section>
+
+        <!-- 예산 -->
+        <section class="card panel panel-budget">
+          <header class="panel-head">
+            <h2>💰 예산</h2>
+            <span id="budgetBadge" class="pill"></span>
+          </header>
+          <div id="budgetView"></div>
+        </section>
+
+        <!-- 출처 -->
+        <section class="card panel panel-sources">
+          <header class="panel-head">
+            <h2>📚 출처</h2>
+            <span class="pill pill-muted" id="sourcesBadge">샘플</span>
+          </header>
+          <div id="sourcesView"></div>
+        </section>
+
+        <!-- 장소 검색 (NAVER API HUB) -->
+        <section class="card panel panel-places" id="placesPanel">
+          <header class="panel-head">
+            <h2>📍 장소 검색 <small class="muted">NAVER 지역 검색</small></h2>
+            <span id="placesStatus" class="pill pill-muted">검색 전</span>
+          </header>
+          <form class="places-form" id="placesForm" autocomplete="off">
+            <div class="places-row">
+              <label class="sub-label">지역
+                <input id="placesRegion" placeholder="여행 지역" />
+              </label>
+              <label class="sub-label grow">키워드 직접 입력 (선택)
+                <input id="placesKeyword" maxlength="30" placeholder="예: 물회, 오션뷰 카페, 박물관" />
+              </label>
+              <button type="submit" class="btn btn-dark" id="placesBtn">검색</button>
+            </div>
+            <div class="chips" id="placesChips"></div>
+          </form>
+          <div class="alert alert-error" id="placesError" role="alert" hidden>
+            <span class="alert-icon" aria-hidden="true">⚠️</span>
+            <div class="alert-body"><strong>검색하지 못했어요</strong><p id="placesErrorMsg"></p></div>
+          </div>
+          <div id="placesResults" class="places-results" aria-live="polite">
+            <p class="empty">여행 지역과 키워드를 고르고 <b>검색</b>을 눌러 보세요. 장소명·주소·카테고리·좌표는 NAVER 검색 결과 그대로 보여드려요.</p>
+          </div>
+          <p class="muted small places-foot">※ NAVER 지역 검색 API는 키워드당 최대 5곳을 돌려주며, 영업시간·평점·가격 정보는 제공하지 않아 표시하지 않아요.</p>
+        </section>
+
+        <!-- Agent 실행 기록 -->
+        <section class="card panel panel-log">
+          <header class="panel-head">
+            <h2>🤖 Agent Trace <small class="muted">실제 호출된 Tool과 결과</small></h2>
+            <span id="logStatus" class="pill pill-muted">대기 중</span>
+          </header>
+          <div class="trace-filter" id="traceFilter" role="toolbar" aria-label="Tool별로 보기"></div>
+          <ol class="log" id="agentLog"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">AI가 생성한 일정은 실제 장소·경로·가격 정보와 다를 수 있어요 · 방문 전 꼭 확인해 주세요</footer>
+
+  <script src="js/sample-data.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
