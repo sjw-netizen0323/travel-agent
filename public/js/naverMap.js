@@ -52,6 +52,7 @@ export function initNaverMap(el, keyId, { onFail } = {}) {
           zoomControl: true, zoomControlOptions: { position: maps.Position.TOP_RIGHT },
           mapDataControl: false, scaleControl: true,
         });
+        watchSize(el);
         if (nm.status !== "failed") { nm.status = "ready"; document.documentElement.dataset.naverMap = "ready"; }
         finish(nm.status === "ready");
       } catch (e) {
@@ -66,6 +67,25 @@ export function initNaverMap(el, keyId, { onFail } = {}) {
     document.head.appendChild(s);
   });
 }
+
+/**
+ * 지도 칸이 숨겨진(display:none, 0×0) 상태에서 지도가 만들어지면 나중에 보여도 빈 화면으로 남음.
+ * 칸 크기가 바뀔 때마다 지도 크기를 다시 맞추고, 0에서 커졌을 때는 마지막 표시 범위로 다시 맞춤.
+ */
+function watchSize(el) {
+  if (typeof ResizeObserver === "undefined") return;
+  let wasEmpty = true;
+  new ResizeObserver(() => {
+    const w = el.clientWidth, h = el.clientHeight;
+    if (!nm.map || !w || !h) { wasEmpty = true; return; }
+    const { maps } = window.naver;
+    nm.map.setSize(new maps.Size(w, h));
+    if (wasEmpty && nm.lastBounds) nm.map.fitBounds(nm.lastBounds, FIT_PADDING);
+    wasEmpty = false;
+  }).observe(el);
+}
+
+const FIT_PADDING = { top: 40, right: 40, bottom: 40, left: 40 };
 
 function fail(reason) {
   nm.status = "failed";
@@ -124,13 +144,15 @@ export function drawNaverMap({ points, paths = [], highlight = null, onSelect })
   if (sig !== nm.fitSig && all.length) {
     nm.fitSig = sig;
     if (all.length === 1) {
+      nm.lastBounds = null;
       nm.map.setCenter(new maps.LatLng(all[0][1], all[0][0]));
       nm.map.setZoom(14);
     } else {
       const first = new maps.LatLng(all[0][1], all[0][0]);
       const bounds = new maps.LatLngBounds(first, first);
       all.forEach(([lng, lat]) => bounds.extend(new maps.LatLng(lat, lng)));
-      nm.map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+      nm.lastBounds = bounds;
+      nm.map.fitBounds(bounds, FIT_PADDING);
     }
   } else if (highlight && nm.markers.has(highlight)) {
     nm.map.panTo(nm.markers.get(highlight).marker.getPosition());
