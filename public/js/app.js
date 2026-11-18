@@ -166,6 +166,14 @@ import { initNaverMap, drawNaverMap, isReady as isNaverReady, failReason as nave
     return finalizeBudget(items, input, nights, "샘플 추정");
   }
 
+  /** AI 예산 항목의 예비비를 금액이 있는 항목 합계의 10%로 다시 계산 (AI에게 맡기면 미확인이 되기 쉬움) */
+  function withReserve(items) {
+    const rest = items.filter((it) => it.key !== "reserve");
+    const known = rest.reduce((a, it) => a + (Number.isFinite(Number(it.amount)) && it.amount !== null ? Number(it.amount) : 0), 0);
+    if (!known) return rest;
+    return [...rest, { key: "reserve", label: "예비비 (합계의 10%)", amount: Math.round(known * 0.1), status: "estimated", source: "자동 계산" }];
+  }
+
   /** 예산 항목 키 → calculate_budget 카테고리 */
   const KEY_TO_CATEGORY = { flight: "transport", ktx: "transport", rental: "transport", fuel: "transport", toll: "transport", lodging: "lodging", food: "food", sight: "sightseeing", cafe: "shopping", etc: "etc", reserve: "reserve" };
 
@@ -253,7 +261,7 @@ import { initNaverMap, drawNaverMap, isReady as isNaverReady, failReason as nave
       title: ai.title, emoji: firstGrapheme(ai.emoji) || "🚗", tagline: ai.tagline,
       eyebrow: "AI Agent가 만든 여행 일정",
       notice: ai.region_note, tips: ai.tips || [], references: ai.references || [],
-      budget: finalizeBudget(ai.budget_items || [], input, input.duration - 1, "AI Agent"),
+      budget: finalizeBudget(withReserve(ai.budget_items || []), input, input.duration - 1, "AI Agent"),
     };
   }
 

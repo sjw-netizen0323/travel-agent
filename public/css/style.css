@@ -456,7 +456,8 @@ pre {
 .refs a:hover { text-decoration: underline; }
 
 /* ── 결과 화면: NAVER 지도 / 예산 표 / 출처 / Trace 필터 ── */
-.naver-map { position: absolute; inset: 0; }
+/* NAVER 지도 SDK가 이 칸에 인라인 position:relative를 넣어 높이가 0이 되므로 !important로 고정 */
+.naver-map { position: absolute !important; inset: 0; width: 100%; height: 100%; }
 .naver-map[hidden] { display: none; }
 .map-note { margin-top: 8px; }
 .nmk {
