@@ -894,6 +894,11 @@ import { initNaverMap, drawNaverMap, isReady as isNaverReady, failReason as nave
         case "tool_skipped":
           logger.step({ agent: "Tool", tool: ev.name, icon: "⏭️", title: `${ev.name} (건너뜀)` }).fail("Tool 호출 한도를 넘어 실행하지 않았어요.");
           break;
+        case "round_trip":
+          logger.step({ agent: "Server", tool: "get_routes", icon: "🚗", title: `출발지 왕복 경로 (${ev.origin} ↔ ${ev.region})` }).done({
+            text: `왕복 ${Math.round(ev.distanceKm)}km · ${ev.durationMin}분 · 유류비 ${won(ev.fuelPrice)}${ev.tollFare !== null ? ` · 통행료 ${won(ev.tollFare)}` : ""}`,
+          });
+          break;
         case "nudge":
           logger.step({ agent: "Agent", icon: "🔁", title: "최종 답변 보완 요청" }).done({ text: ev.gaps.join(" "), warn: true });
           break;

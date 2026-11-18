@@ -14,6 +14,7 @@ import OpenAI from "openai";
 import { searchPlacesMulti, NaverApiError } from "./lib/searchPlaces.js";
 import { getRoutes, NaverMapsError } from "./lib/getRoutes.js";
 import { runTravelAgent, AgentError } from "./lib/agent.js";
+import { addRoundTripCosts } from "./lib/roundTrip.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env"), quiet: true });
@@ -185,6 +186,13 @@ app.post("/api/plan", async (req, res) => {
       const reason = typeof plan.region_note === "string" ? plan.region_note.trim().slice(0, 300) : "";
       send({ type: "error", error: reason || "AI가 빈 일정을 돌려줬어요. 입력을 확인하고 다시 시도해 주세요.", code: "empty_plan" });
     } else {
+      // 자가용이면 출발지 왕복 유류비·통행료를 예산에 더함 (실패해도 일정은 그대로 보여줌)
+      try {
+        meta.round_trip = await addRoundTripCosts(plan, input);
+        if (meta.round_trip) send({ type: "round_trip", origin: input.origin, region: input.region, ...meta.round_trip });
+      } catch (e) {
+        console.error(`[api/plan] 왕복 경로 계산 실패: ${e?.message ?? e}`);
+      }
       send({ type: "result", plan, meta });
     }
   } catch (err) {
