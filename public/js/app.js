@@ -894,6 +894,9 @@ import { initNaverMap, drawNaverMap, isReady as isNaverReady, failReason as nave
         case "tool_skipped":
           logger.step({ agent: "Tool", tool: ev.name, icon: "⏭️", title: `${ev.name} (건너뜀)` }).fail("Tool 호출 한도를 넘어 실행하지 않았어요.");
           break;
+        case "nudge":
+          logger.step({ agent: "Agent", icon: "🔁", title: "최종 답변 보완 요청" }).done({ text: ev.gaps.join(" "), warn: true });
+          break;
         case "limit":
           logger.step({ agent: "Agent", icon: "⛔", title: "반복 한도 도달" }).done({
             text: { max_turns: "최대 반복 횟수", max_tool_calls: "최대 Tool 호출 수", deadline: "시간 제한" }[ev.reason] + "에 도달해 지금까지의 결과로 최종 답변을 요청해요.", warn: true,
